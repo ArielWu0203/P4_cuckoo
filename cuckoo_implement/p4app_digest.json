@@ -1,0 +1,30 @@
+{
+  "p4_src": "l2_learning_digest.p4",
+  "cli": true,
+  "pcap_dump": true,
+  "enable_log": true,
+  "tasks_file": "tasks.txt",
+  "topology": {
+    "assignment_strategy": "l2",
+    "default":{
+      "auto_arp_tables": false
+    },
+    "links": [["h1", "s1"], ["h2", "s1"], ["h3", "s1"], ["h4","s1"]],
+    "hosts": {
+      "h1": {
+      },
+      "h2": {
+      }
+      ,
+      "h3": {
+      }
+      ,
+      "h4": {
+      }
+    },
+    "switches": {
+      "s1": {
+      }
+    }
+  }
+}
