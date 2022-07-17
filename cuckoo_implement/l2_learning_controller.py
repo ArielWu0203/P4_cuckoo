@@ -68,7 +68,7 @@ class L2Controller(object):
         
     def learn(self, learning_data):
         for mac_addr, ingress_port in  learning_data:
-            logging.info("learn mac: %012X ingress_port: %s\n" % (mac_addr, ingress_port))
+            # logging.info("learn mac: %012X ingress_port: %s\n" % (mac_addr, ingress_port))
             self.controller.table_add("smac", "NoAction", [str(mac_addr)])
             self.controller.table_add("dmac", "forward", [str(mac_addr)], [str(ingress_port)])
 

@@ -2,7 +2,7 @@
 start=$(date +%s)
 
 duration=0
-while [ $duration -lt 60 ]
+while [ $duration -lt 15 ]
 do
     end=$(date +%s)
     duration=$(( end - start ))

@@ -10,8 +10,8 @@ const bit<6> TCP_ACK = 0x10;
 const bit<6> TCP_RST = 0x04;
 
 
-#define REGISTER_LENGTH 5
-#define CUCKOO_ROW_LENGTH  1
+#define REGISTER_LENGTH 301
+#define CUCKOO_ROW_LENGTH  75
 #define T 5
 
 /*************************************************************************
@@ -88,6 +88,10 @@ struct metadata {
     slot_t read_slot;
     slot_t write_slot;
     bit<32> insert_index;
+    bit<4> rand_0;
+    bit<4> rand_1;
+    bit<4> rand_2;
+    bit<4> rand_3;
 }
 
 struct headers {
@@ -214,9 +218,11 @@ control MyIngress(inout headers hdr,
         bit<32> empty_index=0;
         bit<1> find_flag=0;
         meta.insert_index=REGISTER_LENGTH-1;
-
+        
+        bit <32> hash_value=0;
         /* First column */
-        bit<32> now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {hdr.ethernet.dstAddr, hdr.ipv4.srcAddr, meta.rand_0}, (bit<32>)CUCKOO_ROW_LENGTH);
+        bit<32> now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if(empty_flag==0 && meta.read_slot.count==0) {
@@ -229,7 +235,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Second column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {hdr.ethernet.dstAddr, hdr.ipv4.srcAddr, meta.rand_1}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if(empty_flag==0 && meta.read_slot.count==0) {
@@ -242,7 +249,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Third column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {hdr.ethernet.dstAddr, hdr.ipv4.srcAddr, meta.rand_2}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if(empty_flag==0 && meta.read_slot.count==0) {
@@ -255,7 +263,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Forth column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {hdr.ethernet.dstAddr, hdr.ipv4.srcAddr, meta.rand_3}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if(empty_flag==0 && meta.read_slot.count==0) {
@@ -282,8 +291,10 @@ control MyIngress(inout headers hdr,
         bit<32> insert_index=REGISTER_LENGTH-1;
         bit<1> find_flag=0;
 
+        bit <32> hash_value;
         /* First column */
-        bit<32> now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {mac, ip, meta.rand_0}, (bit<32>)CUCKOO_ROW_LENGTH);
+        bit<32> now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if (find_flag==0 && meta.read_slot.dst_mac==slot.dst_mac && meta.read_slot.src_ip==slot.src_ip) {
@@ -292,7 +303,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Second column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {mac, ip, meta.rand_1}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if (find_flag==0 && meta.read_slot.dst_mac==slot.dst_mac && meta.read_slot.src_ip==slot.src_ip) {
@@ -301,7 +313,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Third column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {mac, ip, meta.rand_2}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if (find_flag==0 && meta.read_slot.dst_mac==slot.dst_mac && meta.read_slot.src_ip==slot.src_ip) {
@@ -310,7 +323,8 @@ control MyIngress(inout headers hdr,
         }
 
         /* Forth column*/
-        now_index=now_column*CUCKOO_ROW_LENGTH;
+        hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {mac, ip, meta.rand_3}, (bit<32>)CUCKOO_ROW_LENGTH);
+        now_index=now_column*CUCKOO_ROW_LENGTH + hash_value;
         now_column=now_column+1;
         cuckoo_read(now_index);
         if (find_flag==0 && meta.read_slot.dst_mac==slot.dst_mac && meta.read_slot.src_ip==slot.src_ip) {
@@ -329,6 +343,7 @@ control MyIngress(inout headers hdr,
         meta.white_entry.srcAddr=hdr.ipv4.srcAddr;
         digest<white_entry_t>(1, meta.white_entry);
         swap_field();
+        
         // Set tcp flags
         hdr.tcp.ctrl=TCP_RST;
         hdr.tcp.seqNo=hdr.tcp.ackNo;
@@ -437,6 +452,12 @@ control MyIngress(inout headers hdr,
     }
 
     apply {
+        
+        meta.rand_0=0;
+        meta.rand_1=17;
+        meta.rand_2=29;
+        meta.rand_3=37;
+
         smac.apply();
         if(black_list.apply().hit) {
             if(hdr.tcp.isValid() && hdr.tcp.ctrl==TCP_SYN) {
@@ -458,7 +479,6 @@ control MyIngress(inout headers hdr,
                     /* Info to the controller */
                     if(meta.write_slot.count > T) {
                         /* Clear the slot */
-                        cuckoo_write(meta.insert_index, (slot_t){48w0, 32w0, 16w0});
                         meta.black_entry.digest_type=3;
                         meta.black_entry.index=meta.insert_index;
                         meta.black_entry.srcAddr=hdr.ipv4.dstAddr;
