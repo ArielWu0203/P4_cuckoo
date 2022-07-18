@@ -57,6 +57,10 @@ class L2Controller(object):
 
     def fill_table_test(self):
         self.controller.table_add("white_list", "NoAction", ["10.0.0.1"])
+        self.controller.table_add("white_list", "NoAction", ["10.0.0.2"])
+        self.controller.table_add("white_list", "NoAction", ["10.0.0.3"])
+        #     for  i in range (1, 210):
+        #         self.controller.table_add("dmac", "forward", ['00:00:0a:00:%s' % f'{i:02x}'], [str(i)])
         seq=100
         for ip_mask in ['0', '1', '2', '3', '4' , '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']:
             for port_mask in ['0', '1', '2', '3', '4' , '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']:
@@ -65,7 +69,7 @@ class L2Controller(object):
                 self.controller.table_add("check_ack", "modify_ack_to_rst", ['0x00000%s00&&&0x00000f00'%ip_mask, '0x00%s0&&&0x00f0'%port_mask, ack_str])
                 self.controller.table_add("check_syn", "modify_syn_to_synack", ['0x00000%s00&&&0x00000f00'%ip_mask, '0x00%s0&&&0x00f0'%port_mask], [seq_str])
                 seq+=1
-        
+
     def learn(self, learning_data):
         for mac_addr, ingress_port in  learning_data:
             # logging.info("learn mac: %012X ingress_port: %s\n" % (mac_addr, ingress_port))
@@ -76,14 +80,14 @@ class L2Controller(object):
         for ip in data:
             logging.info("white ip: %8X" % ip)
             self.controller.table_add("white_list", "NoAction", [str(ip)])
-    
+
     def add_black_list(self, data):
         for index, ip in data:
             logging.info("black ip: %8X" % ip)
             self.controller.table_add("black_list", "NoAction", [str(ip)])
-            self.cli_api.register_write("MyIngress.cuckoo_register_mac", index, 0)
-            self.cli_api.register_write("MyIngress.cuckoo_register_ip", index, 0)
-            self.cli_api.register_write("MyIngress.cuckoo_register_count", index, 0)
+            # self.cli_api.register_write("MyIngress.cuckoo_register_mac", index, 0)
+            # self.cli_api.register_write("MyIngress.cuckoo_register_ip", index, 0)
+            # self.cli_api.register_write("MyIngress.cuckoo_register_count", index, 0)
 
     def unpack_digest(self, msg, num_samples):
         learn_digest = []

@@ -467,12 +467,10 @@ $RECYCLE.BIN/
 *.json
 !*p4app*.json
 
-*.pcap
 
 # Build folders
 build*/
 log*/
-pcap*/
 *.pickle
 
 *.db

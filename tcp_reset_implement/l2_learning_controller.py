@@ -60,6 +60,8 @@ class L2Controller(object):
         self.controller.table_add("dmac", "forward", ['00:00:0a:00:00:03'], ['3'])
         self.controller.table_add("dmac", "forward", ['00:00:0a:00:00:04'], ['4'])
         self.controller.table_add("white_list", "NoAction", ["10.0.0.1"])
+        self.controller.table_add("white_list", "NoAction", ["10.0.0.2"])
+        self.controller.table_add("white_list", "NoAction", ["10.0.0.3"])
         seq=100
         for ip_mask in ['0', '1', '2', '3', '4' , '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']:
             # ip_mask_str=f'{ip_mask:02x}'
@@ -69,7 +71,7 @@ class L2Controller(object):
                 self.controller.table_add("check_ack", "modify_ack_to_rst", ['0x00000%s00&&&0x00000f00'%ip_mask, '0x00%s0&&&0x00f0'%port_mask, ack_str])
                 self.controller.table_add("check_syn", "modify_syn_to_synack", ['0x00000%s00&&&0x00000f00'%ip_mask, '0x00%s0&&&0x00f0'%port_mask], [seq_str])
                 seq+=1
-        
+
     def learn(self, learning_data):
         for mac_addr, ingress_port in  learning_data:
             logging.info("learn mac: %012X ingress_port: %s\n" % (mac_addr, ingress_port))

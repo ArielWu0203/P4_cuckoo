@@ -88,10 +88,10 @@ struct metadata {
     slot_t read_slot;
     slot_t write_slot;
     bit<32> insert_index;
-    bit<4> rand_0;
-    bit<4> rand_1;
-    bit<4> rand_2;
-    bit<4> rand_3;
+    bit<8> rand_0;
+    bit<8> rand_1;
+    bit<8> rand_2;
+    bit<8> rand_3;
 }
 
 struct headers {
@@ -135,7 +135,7 @@ parser MyParser(packet_in packet,
         packet.extract(hdr.tcp);
         transition accept;
     }
-    
+
 }
 
 
@@ -170,7 +170,7 @@ control MyIngress(inout headers hdr,
         meta.learn.ingress_port = standard_metadata.ingress_port;
         digest<learn_t>(1, meta.learn);
     }
-    
+
     action cuckoo_read(bit<32> index) {
         cuckoo_register_mac.read(meta.read_slot.dst_mac, index);
         cuckoo_register_ip.read(meta.read_slot.src_ip, index);
@@ -218,7 +218,7 @@ control MyIngress(inout headers hdr,
         bit<32> empty_index=0;
         bit<1> find_flag=0;
         meta.insert_index=REGISTER_LENGTH-1;
-        
+
         bit <32> hash_value=0;
         /* First column */
         hash(hash_value, HashAlgorithm.crc32, (bit<32>) 0, {hdr.ethernet.dstAddr, hdr.ipv4.srcAddr, meta.rand_0}, (bit<32>)CUCKOO_ROW_LENGTH);
@@ -343,17 +343,17 @@ control MyIngress(inout headers hdr,
         meta.white_entry.srcAddr=hdr.ipv4.srcAddr;
         digest<white_entry_t>(1, meta.white_entry);
         swap_field();
-        
+
         // Set tcp flags
         hdr.tcp.ctrl=TCP_RST;
         hdr.tcp.seqNo=hdr.tcp.ackNo;
 
         clear_the_slot(hdr.ethernet.dstAddr, hdr.ipv4.srcAddr);
 
-        standard_metadata.egress_spec =standard_metadata.ingress_port; 
+        standard_metadata.egress_spec =standard_metadata.ingress_port;
     }
 
-    
+
     table white_list {
         key = {
             hdr.ipv4.srcAddr: exact;
@@ -452,7 +452,7 @@ control MyIngress(inout headers hdr,
     }
 
     apply {
-        
+
         meta.rand_0=0;
         meta.rand_1=17;
         meta.rand_2=29;
@@ -461,7 +461,7 @@ control MyIngress(inout headers hdr,
         smac.apply();
         if(black_list.apply().hit) {
             if(hdr.tcp.isValid() && hdr.tcp.ctrl==TCP_SYN) {
-                // clear_the_slot(hdr.ethernet.srcAddr, hdr.ipv4.dstAddr);
+                clear_the_slot(hdr.ethernet.srcAddr, hdr.ipv4.dstAddr);
             }
             drop();
         }
@@ -518,23 +518,23 @@ control MyEgress(inout headers hdr,
 
 control MyComputeChecksum(inout headers hdr, inout metadata meta) {
      apply {
-        update_checksum(true, 
+        update_checksum(true,
             { hdr.ipv4.version,
-            hdr.ipv4.ihl, 
-            hdr.ipv4.diffserv, 
-            hdr.ipv4.totalLen, 
-            hdr.ipv4.identification, 
-            hdr.ipv4.flags, 
+            hdr.ipv4.ihl,
+            hdr.ipv4.diffserv,
+            hdr.ipv4.totalLen,
+            hdr.ipv4.identification,
+            hdr.ipv4.flags,
             hdr.ipv4.fragOffset,
-            hdr.ipv4.ttl, 
-            hdr.ipv4.protocol, 
-            hdr.ipv4.srcAddr, 
-            hdr.ipv4.dstAddr}, 
-            hdr.ipv4.hdrChecksum, 
+            hdr.ipv4.ttl,
+            hdr.ipv4.protocol,
+            hdr.ipv4.srcAddr,
+            hdr.ipv4.dstAddr},
+            hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
 
         update_checksum_with_payload(
-        hdr.tcp.isValid(), 
+        hdr.tcp.isValid(),
         {hdr.ipv4.srcAddr,
         hdr.ipv4.dstAddr,
         8w0,
