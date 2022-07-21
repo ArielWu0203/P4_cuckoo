@@ -1,8 +1,8 @@
 from p4utils.mininetlib.network_API import NetworkAPI
 import random
 
-normal_num=100
-attacker_num=100
+normal_num=50
+attacker_num=70
 
 net = NetworkAPI()
 
